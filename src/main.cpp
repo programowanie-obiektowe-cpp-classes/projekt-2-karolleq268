@@ -2,9 +2,9 @@
 
 #include <iostream>
 #include <vector>
+#include <algorithm> // dla find_if_not()
 #include <cctype> // dla std::toupper i ::isspace
 
-// Wzorcowa klasa String
 template <typename T>
 class String {
 protected:
@@ -14,7 +14,8 @@ public:
     // Konstruktor domyślny
     String() {
         //std::cout << "Base constructor called \n";
-    } // zostanie automatycznie stworzony pusty wektor std::vector<T>
+    } 
+    // zostanie automatycznie stworzony pusty wektor std::vector<T>
 
     // Konstruktor z ciągiem znaków C-style (jeśli typ T to char)
     String(const T* str) {
@@ -23,14 +24,6 @@ public:
             str++;
         }
         //std::cout << "Base constructor with string called \n";
-    }
-
-    // Operator + do łączenia dwóch obiektów
-    String operator+(const String& other) const {
-        String result;
-        result.data = data;
-        result.data.insert(result.data.end(), other.data.begin(), other.data.end());
-        return result;
     }
 
     // Funkcja dodająca element na końcu
@@ -59,9 +52,10 @@ public:
 
     // Funkcja usuwająca i-ty element
     void remove_char_at(size_t index) {
-        if (index < data.size()) {
-            data.erase(data.begin() + index); // data.begin wskazuje na pierwszy element, przesuwamy wskaznik o index
+        if (index >= data.size()) {
+            throw std::out_of_range("Index is out of range.");  // Rzucamy wyjątek, gdy indeks jest poza zakresem
         }
+        data.erase(data.begin() + index);  // Usuwamy element z podanego indeksu
     }
 
     // Funkcja dodająca element na i-tą pozycję
@@ -71,11 +65,14 @@ public:
         }
     }
 
-    // Funkcja do usunięcia białych znaków na początku i końcu (dla char, ale można dopasować do innych typów)
+    // Funkcja do usunięcia białych znaków na początku i końcu
     String& trim() {
-        auto start = std::find_if_not(data.begin(), data.end(), ::isspace); // zwraca pierwszy znak od początku nie będący znakiem białym
-        auto end = std::find_if_not(data.rbegin(), data.rend(), ::isspace).base(); // .base() przekształca reverse iterator na normalny iterator
-        data.assign(start, end); // "obcina" wektor do start i end
+        auto start = std::find_if_not(data.begin(), data.end(), ::isspace);  // Pierwszy znak, który nie jest białym znakiem
+        auto end = std::find_if_not(data.rbegin(), data.rend(), ::isspace).base();  // .base() konwertuje reverse iterator na normalny
+
+        data.erase(data.begin(), start);  // Usuwamy znaki przed 'start'
+        data.erase(end, data.end());      // Usuwamy znaki po 'end'
+
         return *this;
     }
 
@@ -104,6 +101,14 @@ public:
             data.push_back(*str);
             str++;
         }
+    }
+
+    // Operator + do łączenia dwóch obiektów
+    String operator+(const String& other) const {
+        String result;
+        result.data = data;
+        result.data.insert(result.data.end(), other.data.begin(), other.data.end());
+        return result;
     }
 };
 
@@ -159,9 +164,13 @@ int main() {
     str1.remove_last_char();
     str1.print();
 
-    str1.remove_char_at(3);
-    str1.print();
-
+    try {
+        str1.remove_char_at(30);
+        str1.print();
+    } catch (const std::out_of_range& e) {
+        std::cout << "Błąd: " << e.what() << std::endl;  // Obsługa wyjątku
+    }
+    
     str1.reverse();
     str1.print();
 
@@ -172,10 +181,10 @@ int main() {
     String<char> str2(" Ala ");
     str2.print();
 
-    std::cout << "Dlugosc poczatkowa: " << str2.length() << std::endl; // 5
+    std::cout << "Dlugosc poczatkowa: " << str2.length() << std::endl; 
 
     int n = str2.trim().length(); // jednoczesnie usuwamy biale znaki i zwracamy nowa dlugosc
-    std::cout << "Dlugosc po trim(): " << n << std::endl; // 3
+    std::cout << "Dlugosc po trim(): " << n << std::endl; 
     str2.print();
 
     printf("\n");
@@ -200,3 +209,4 @@ int main() {
 
     return 0;
 }
+
